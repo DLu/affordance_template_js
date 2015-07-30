@@ -33,11 +33,21 @@ function AffordanceTemplateInterface(options) {
        serviceType : 'affordance_template_msgs/GetAffordanceTemplateConfigInfo'
      });    
      
-     
+    this.get_robots_client = new ROSLIB.Service({
+      ros : ros, 
+      name : '/affordance_template_server/get_robots',
+      serviceType : 'affordance_template_msgs/GetRobotConfigInfo'
+    });
+    
     var request = new ROSLIB.ServiceRequest({name : robot});
+    
+    this.get_robots_client.callService(request, function(result) {
+      that.robot_info = result.robots[0];
+    });
    
     this.get_templates_client.callService(request, function(result) {
-      that.populate_affordances('affordance_list', result.templates);
+      that.templates = result.templates;
+      that.populate_affordances('affordance_list');
     });
 };
 
@@ -77,11 +87,11 @@ AffordanceTemplateInterface.prototype.update_all = function()
     });
 }
 
-AffordanceTemplateInterface.prototype.populate_affordances = function(id, elements)
+AffordanceTemplateInterface.prototype.populate_affordances = function(id)
 {
     document.getElementById(id).innerHTML = '';
-    for(i in elements){
-        var element = elements[i];
+    for(i in this.templates){
+        var element = this.templates[i];
         var name = element.type;
         // create the necessary elements
         var label= document.createElement("label");
