@@ -39,6 +39,12 @@ function AffordanceTemplateInterface(options) {
       serviceType : 'affordance_template_msgs/GetRobotConfigInfo'
     });
     
+    this.set_template_trajectory_client = new ROSLIB.Service({
+      ros : ros, 
+      name : '/affordance_template_server/set_template_trajectory',
+      serviceType : 'affordance_template_msgs/SetAffordanceTemplateTrajectory'
+    });
+    
     var request = new ROSLIB.ServiceRequest({name : robot});
     
     this.get_robots_client.callService(request, function(result) {
@@ -93,74 +99,127 @@ AffordanceTemplateInterface.prototype.setup_ee_box = function(ids, end_effectors
     document.getElementById("ee_box").innerHTML = s;
 }
 
+AffordanceTemplateInterface.prototype.update_select_box = function(id, options, change_callback)
+{
+    var tbox = document.getElementById(id);    
+    var prev = tbox.options[tbox.selectedIndex];        
+    tbox.innerHTML = '';
+    tbox.onchange=function() { change_callback.call(this) };
+    
+    for(var i in options){
+        var option = document.createElement("option");
+        option.text = options[i];
+        tbox.add(option);
+    }
+    
+    if(prev != tbox.options[tbox.selectedIndex]){
+        change_callback.call(this);
+    }
+}
+
 AffordanceTemplateInterface.prototype.update_all = function()
 {
     var request = new ROSLIB.ServiceRequest({});
 
     var that = this;
     this.get_running_client.callService(request, function(result) {
-        var tbox = document.getElementById('template_box');
-        
-        var prev = tbox.options[tbox.selectedIndex];        
-        tbox.innerHTML = '';
-        tbox.onchange=function() { that.update_template(); };
-        
-        for(i in result.templates){
-            var option = document.createElement("option");
-            option.text = result.templates[i];
-            tbox.add(option);
-        }
-        
-        if(prev != tbox.options[tbox.selectedIndex]){
-            that.update_template();
-        }
+        that.update_select_box('template_box', result.templates, that.update_template);
     });
 }
 
-AffordanceTemplateInterface.prototype.update_template = function()
+AffordanceTemplateInterface.prototype.get_select_value = function(id)
 {
-    var tbox = document.getElementById('template_box');
+    var tbox = document.getElementById(id);
     var opt = tbox.options[tbox.selectedIndex];
     if(!opt){
         return;
     }
-    var keys = opt.value.split(':');
-    var name = keys[0], num=keys[1];
+    return opt.value;
+}
 
-    for(var i in this.templates)
+AffordanceTemplateInterface.prototype.get_template = function()
+{
+    return this.get_select_value('template_box');
+}
+
+AffordanceTemplateInterface.prototype.get_trajectory = function()
+{
+    return this.get_select_value('trajectory_box');
+}
+
+AffordanceTemplateInterface.prototype.search_by_key = function(list, name, field)
+{
+    for(var i in list)
     {
-        console.log( this.templates[i] );
-        if(this.templates[i].type !== name )
-            continue;
-        var trajs = this.templates[i].trajectory_info;
-            
-        var tbox = document.getElementById('trajectory_box');
-        
-        var prev = tbox.options[tbox.selectedIndex];        
-        tbox.innerHTML = '';
-        tbox.onchange=function() { that.update_trajectory(); };
-        
+        if(list[i][field] == name )
+            return list[i];
+    }
+}
+
+AffordanceTemplateInterface.prototype.get_template_object = function(name)
+{
+    return this.search_by_key(this.templates, name, 'type');
+}
+
+AffordanceTemplateInterface.prototype.get_trajectory_object = function(template, traj)
+{
+    var template = this.get_template_object(template);
+    if(template)
+        return this.search_by_key(template.trajectory_info, traj, 'name');
+    else
+        return;    
+}
+
+AffordanceTemplateInterface.prototype.update_template = function()
+{
+    var template = this.get_template();
+    var keys = template.split(':');
+    var name = keys[0], num=keys[1];
+    
+    var to = this.get_template_object(name);
+    if(to){
+        var trajs = to.trajectory_info;
+        var names = [];
         for(var j in trajs){
-            var option = document.createElement("option");
-            option.text = trajs[j].name;
-            tbox.add(option);
+            names.push(trajs[j].name);
         }
-        
-        if(prev != tbox.options[tbox.selectedIndex]){
-            this.update_trajectory();
-        }
-        break;
+        this.update_select_box('trajectory_box', names, this.update_trajectory);
     }
 }
 
 AffordanceTemplateInterface.prototype.update_trajectory = function()
 {
-    var tbox = document.getElementById('trajectory_box');
-    var opt = tbox.options[tbox.selectedIndex];
-    if(!opt){
-        return;
+    var template = this.get_template();
+    var traj = this.get_trajectory();
+    var request = new ROSLIB.ServiceRequest({name: template, trajectory: traj});
+    this.set_template_trajectory_client.callService(request, function(result) {
+    });
+    var keys = template.split(':');
+    var name = keys[0], num=keys[1];
+    var tinfo = this.get_trajectory_object(name, traj) ;
+    var mmap = [];
+    for( var i in tinfo.waypoint_info )
+    {
+        mmap[ tinfo.waypoint_info[i].id ] = tinfo.waypoint_info[i];
     }
-    console.log( opt.value );
+    
+    for(var i in this.robot_info.end_effectors)
+    {
+        var ee = this.robot_info.end_effectors[i];
+        var j = mmap[ ee.id ];
+        if(j == undefined){
+            document.getElementById('ee_opt_' + ee.name).disabled = true;
+            document.getElementById('ee_n_' + ee.name).innerHTML = '0';
+            document.getElementById('ee_s_' + ee.name).innerHTML = 'N/A';
+        }else{
+            document.getElementById('ee_opt_' + ee.name).disabled = false;
+            document.getElementById('ee_n_' + ee.name).innerHTML = j.num_waypoints;
+            document.getElementById('ee_s_' + ee.name).innerHTML = '';
+            
+        }
+    }
+    
+    
 }
 
 AffordanceTemplateInterface.prototype.populate_affordances = function(id)
