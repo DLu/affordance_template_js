@@ -1,7 +1,47 @@
-var buttons = {"start":"GO_TO_START", "left":"PLAY_BACKWARD", "rwnd":"STEP_BACKWARD", "right":"PLAY_FORWARD", "ffwd":"STEP_FORWARD", "pause":"PAUSE", "end": "GO_TO_END"};
-var add_template_client, get_running_client;
+/**
+ * @author David V. Lu!! - davidvlu@gmail.com
+ */
 
-function make_buttons()
+var buttons = {"start":"GO_TO_START", "left":"PLAY_BACKWARD", "rwnd":"STEP_BACKWARD", "right":"PLAY_FORWARD", "ffwd":"STEP_FORWARD", "pause":"PAUSE", "end": "GO_TO_END"};
+
+/** 
+ * @constructor
+ */
+function AffordanceTemplateInterface(options) {
+    options = options || {};
+    var ros = options.ros;
+    var robot = options.robot || 'r2'
+    var that = this;
+    
+    this.make_buttons();
+    
+    this.add_template_client = new ROSLIB.Service({
+      ros : ros,
+      name : '/affordance_template_server/add_template',
+      serviceType : 'affordance_template_msgs/AddAffordanceTemplate'
+    });
+    
+    this.get_running_client = new ROSLIB.Service({
+      ros : ros,
+      name : '/affordance_template_server/get_running',
+      serviceType : 'affordance_template_msgs/GetRunningAffordanceTemplates'
+    });
+    
+    this.get_templates_client = new ROSLIB.Service({
+       ros : ros,
+       name : '/affordance_template_server/get_templates',
+       serviceType : 'affordance_template_msgs/GetAffordanceTemplateConfigInfo'
+     });    
+     
+     
+    var request = new ROSLIB.ServiceRequest({name : robot});
+   
+    this.get_templates_client.callService(request, function(result) {
+      that.populate_affordances('affordance_list', result.templates);
+    });
+};
+
+AffordanceTemplateInterface.prototype.make_buttons = function() 
 {
     var path = "affordance_template_js/images/"
     
@@ -13,8 +53,8 @@ function make_buttons()
     document.getElementById("controls").innerHTML = s;
 }
 
-function on_check(name, value){
-
+AffordanceTemplateInterface.prototype.on_check = function(name, value)
+{
   if(value){
     var request = new ROSLIB.ServiceRequest({class_type: name});
     add_template_client.callService(request, function(result) {
@@ -25,7 +65,7 @@ function on_check(name, value){
   }
 }
 
-function update_all()
+AffordanceTemplateInterface.prototype.update_all = function()
 {
     var request = new ROSLIB.ServiceRequest({});
     console.log(request);
@@ -37,7 +77,7 @@ function update_all()
     });
 }
 
-function populate_affordances(id, elements)
+AffordanceTemplateInterface.prototype.populate_affordances = function(id, elements)
 {
     document.getElementById(id).innerHTML = '';
     for(i in elements){
@@ -59,37 +99,4 @@ function populate_affordances(id, elements)
         // add the label element to your div
         document.getElementById(id).appendChild(label);
     }
-}
-
-function at_init(ros)
-{
-    make_buttons();
-
-    add_template_client = new ROSLIB.Service({
-      ros : ros,
-      name : '/affordance_template_server/add_template',
-      serviceType : 'affordance_template_msgs/AddAffordanceTemplate'
-    });
-    
-    get_running_client = new ROSLIB.Service({
-      ros : ros,
-      name : '/affordance_template_server/get_running',
-      serviceType : 'affordance_template_msgs/GetRunningAffordanceTemplates'
-    });
-
-    var robot = "r2";
-    
-    var get_templates_client = new ROSLIB.Service({
-       ros : ros,
-       name : '/affordance_template_server/get_templates',
-       serviceType : 'affordance_template_msgs/GetAffordanceTemplateConfigInfo'
-     });
-   
-     var request = new ROSLIB.ServiceRequest({name : robot});
-   
-     get_templates_client.callService(request, function(result) {
-       populate_affordances('affordance_list', result.templates);
-     });
-     
-     update_all();
 }
