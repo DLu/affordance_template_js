@@ -59,8 +59,9 @@ AffordanceTemplateInterface.prototype.make_buttons = function()
     var s = "";
     for(b in buttons){
         s += "<img src=\"" + path + b + ".png\" width=\"50px\" onclick=\"button('" + buttons[b] + "')\" />\n";
-
     }
+    s += "<br/><label for=\"template_box\">Template: </label><select style=\"min-width: 150px\" id=\"template_box\"></select>";
+    s += "<br/><label for=\"trajectory_box\">Trajectory: </label><select style=\"min-width: 150px\" id=\"trajectory_box\"></select>";
     document.getElementById("controls").innerHTML = s;
 }
 
@@ -70,8 +71,6 @@ AffordanceTemplateInterface.prototype.on_check = function(name, value)
     var request = new ROSLIB.ServiceRequest({class_type: name});
     add_template_client.callService(request, function(result) {
         update_all();
-      
-        //setup_ee_box(result.ids, result.end_effectors, result.num_points);
     });
   }
 }
@@ -97,13 +96,71 @@ AffordanceTemplateInterface.prototype.setup_ee_box = function(ids, end_effectors
 AffordanceTemplateInterface.prototype.update_all = function()
 {
     var request = new ROSLIB.ServiceRequest({});
-    console.log(request);
-    get_running_client.callService(request, function(result) {
-        console.log(result);
+
+    var that = this;
+    this.get_running_client.callService(request, function(result) {
+        var tbox = document.getElementById('template_box');
+        
+        var prev = tbox.options[tbox.selectedIndex];        
+        tbox.innerHTML = '';
+        tbox.onchange=function() { that.update_template(); };
+        
         for(i in result.templates){
-            alert( result.templates[i] );
+            var option = document.createElement("option");
+            option.text = result.templates[i];
+            tbox.add(option);
+        }
+        
+        if(prev != tbox.options[tbox.selectedIndex]){
+            that.update_template();
         }
     });
+}
+
+AffordanceTemplateInterface.prototype.update_template = function()
+{
+    var tbox = document.getElementById('template_box');
+    var opt = tbox.options[tbox.selectedIndex];
+    if(!opt){
+        return;
+    }
+    var keys = opt.value.split(':');
+    var name = keys[0], num=keys[1];
+
+    for(var i in this.templates)
+    {
+        console.log( this.templates[i] );
+        if(this.templates[i].type !== name )
+            continue;
+        var trajs = this.templates[i].trajectory_info;
+            
+        var tbox = document.getElementById('trajectory_box');
+        
+        var prev = tbox.options[tbox.selectedIndex];        
+        tbox.innerHTML = '';
+        tbox.onchange=function() { that.update_trajectory(); };
+        
+        for(var j in trajs){
+            var option = document.createElement("option");
+            option.text = trajs[j].name;
+            tbox.add(option);
+        }
+        
+        if(prev != tbox.options[tbox.selectedIndex]){
+            this.update_trajectory();
+        }
+        break;
+    }
+}
+
+AffordanceTemplateInterface.prototype.update_trajectory = function()
+{
+    var tbox = document.getElementById('trajectory_box');
+    var opt = tbox.options[tbox.selectedIndex];
+    if(!opt){
+        return;
+    }
+    console.log( opt.value );
 }
 
 AffordanceTemplateInterface.prototype.populate_affordances = function(id)
@@ -128,4 +185,6 @@ AffordanceTemplateInterface.prototype.populate_affordances = function(id)
         // add the label element to your div
         document.getElementById(id).appendChild(label);
     }
+    
+    this.update_all();
 }
