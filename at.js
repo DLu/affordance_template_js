@@ -21,6 +21,12 @@ function AffordanceTemplateInterface(options) {
       serviceType : 'affordance_template_msgs/AddAffordanceTemplate'
     });
     
+    this.delete_template_client = new ROSLIB.Service({
+      ros : ros,
+      name : '/affordance_template_server/delete_template',
+      serviceType : 'affordance_template_msgs/DeleteAffordanceTemplate'
+    });
+    
     this.get_running_client = new ROSLIB.Service({
       ros : ros,
       name : '/affordance_template_server/get_running',
@@ -73,11 +79,23 @@ AffordanceTemplateInterface.prototype.make_buttons = function()
 
 AffordanceTemplateInterface.prototype.on_check = function(name, value)
 {
+  var that = this;
   if(value){
     var request = new ROSLIB.ServiceRequest({class_type: name});
-    add_template_client.callService(request, function(result) {
-        update_all();
+    this.add_template_client.callService(request, function(result) {
+        that.update_all();
     });
+  }else{
+    var template = this.get_template();
+    var keys = template.split(':');
+    var tname = keys[0], num=parseInt(keys[1]);
+    if(name!=tname)
+        return;
+    
+    var request = new ROSLIB.ServiceRequest({class_type: name, id: num});
+    this.delete_template_client.callService(request, function(result) {
+        that.update_all();
+    });      
   }
 }
 
@@ -173,6 +191,9 @@ AffordanceTemplateInterface.prototype.get_trajectory_object = function(template,
 AffordanceTemplateInterface.prototype.update_template = function()
 {
     var template = this.get_template();
+    if(template == undefined){
+        return;
+    }
     var keys = template.split(':');
     var name = keys[0], num=keys[1];
     
@@ -225,6 +246,7 @@ AffordanceTemplateInterface.prototype.update_trajectory = function()
 AffordanceTemplateInterface.prototype.populate_affordances = function(id)
 {
     document.getElementById(id).innerHTML = '';
+    var that = this;
     for(i in this.templates){
         var element = this.templates[i];
         var name = element.type;
@@ -236,7 +258,7 @@ AffordanceTemplateInterface.prototype.populate_affordances = function(id)
         checkbox.type = "checkbox";    // make the element a checkbox
         checkbox.name = name;          // give it a name we can check on the server side
         checkbox.value = name;         // make its value element
-        checkbox.onclick=function() { on_check(this.name, this.checked); };
+        checkbox.onclick=function() { that.on_check(this.name, this.checked); };
 
         label.appendChild(checkbox);   // add the box to the element
         label.appendChild(description);// add the description to the element
