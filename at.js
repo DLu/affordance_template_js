@@ -2,7 +2,7 @@
  * @author David V. Lu!! - davidvlu@gmail.com
  */
 
-var buttons = {"start":"GO_TO_START",  "rwnd":"STEP_BACKWARD", "sync":"SYNC", "ffwd":"STEP_FORWARD", "end": "GO_TO_END"};
+var buttons = {"start":"START",  "rwnd":"STEP_BACKWARD", "sync":"CURRENT", "ffwd":"STEP_FORWARD", "end": "END"};
 
 /** 
  * @constructor
@@ -124,13 +124,11 @@ AffordanceTemplateInterface.prototype.on_check = function(name, value)
         that.update_all();
     });
   }else{
-    var template = this.get_template();
-    var keys = template.split(':');
-    var tname = keys[0], num=parseInt(keys[1]);
-    if(name!=tname)
+    var template = this.get_template_parts();
+    if(name!=template[0])
         return;
     
-    var request = new ROSLIB.ServiceRequest({class_type: name, id: num});
+    var request = new ROSLIB.ServiceRequest({class_type: name, id: template[1]});
     this.delete_template_client.callService(request, function(result) {
         that.update_all();
     });      
@@ -203,6 +201,16 @@ AffordanceTemplateInterface.prototype.get_trajectory = function()
     return this.get_select_value('trajectory_box');
 }
 
+AffordanceTemplateInterface.prototype.get_template_parts = function()
+{
+    var template = this.get_template();
+    if(template == undefined)
+        return template;
+    var keys = template.split(':');
+    var name = keys[0], num=parseInt(keys[1]);
+    return [name, num];
+}
+
 AffordanceTemplateInterface.prototype.search_by_key = function(list, name, field)
 {
     for(var i in list)
@@ -228,14 +236,12 @@ AffordanceTemplateInterface.prototype.get_trajectory_object = function(template,
 
 AffordanceTemplateInterface.prototype.update_template = function()
 {
-    var template = this.get_template();
+    var template = this.get_template_parts();
     if(template == undefined){
         return;
     }
-    var keys = template.split(':');
-    var name = keys[0], num=keys[1];
     
-    var to = this.get_template_object(name);
+    var to = this.get_template_object(template[0]);
     if(to){
         var trajs = to.trajectory_info;
         var names = [];
@@ -253,9 +259,8 @@ AffordanceTemplateInterface.prototype.update_trajectory = function()
     var request = new ROSLIB.ServiceRequest({name: template, trajectory: traj});
     this.set_template_trajectory_client.callService(request, function(result) {
     });
-    var keys = template.split(':');
-    var name = keys[0], num=keys[1];
-    var tinfo = this.get_trajectory_object(name, traj) ;
+    var parts = this.get_template_parts();
+    var tinfo = this.get_trajectory_object(parts[0], traj) ;
     var mmap = [];
     for( var i in tinfo.waypoint_info )
     {
@@ -341,7 +346,72 @@ AffordanceTemplateInterface.prototype.control_status_update = function()
     });
 }
 
-AffordanceTemplateInterface.prototype.button = function(id)
+AffordanceTemplateInterface.prototype.request_plan = function(cmd)
+{
+    var template = this.get_template_parts();
+    var trajectory = this.get_trajectory();
+    var tinfo = this.get_trajectory_object(template[0], trajectory) ;
+    
+    var box_steps = parseInt(document.getElementById('steps').value);
+    
+    var chosen_ees = [];
+    var steps = [];
+    var backwards = cmd == 'STEP_BACKWARD';
+    
+    for(var i in this.robot_info.end_effectors)
+    {
+        var ee = this.robot_info.end_effectors[i];
+        var check = document.getElementById('ee_opt_' + ee.name);
+        if(!check.checked || check.disabled)
+            continue;
+            
+        chosen_ees.push(ee.name);
+        
+        var info = this.search_by_key(tinfo, ee.id, 'id');
+        var idx = ee.waypoint_index;
+        var N = ee.num_waypoints;
+       
+        if(cmd=='CURRENT'){
+            steps.push(0);
+        }else if(cmd=='START'){
+            if(idx==-1) {
+                steps = 1;
+            } else {
+                steps = idx;
+                backwards = true;
+            }
+        }else if(cmd=='END'){
+            if(idx==-1) {
+                steps = N;
+            } else {
+                steps = N - idx - 1;
+                backwards = false;
+            }
+        }else{
+            steps.push(box_steps);
+        }
+    }
+
+    var request = new ROSLIB.ServiceRequest({
+        type: template[0],
+        id: template[1],
+        trajectory_name: trajectory,
+        end_effectors: chosen_ees,
+        steps: steps,
+        direct: cmd=='START' || cmd=="END",
+        backwards: backwards
+        
+    });
+    
+    console.log(request);
+    
+    this.plan_command_client.callService(request, function(result) {
+        
+    }
+}
+
+AffordanceTemplateInterface.prototype.button = function(cmd)
 {
     this.control_status_update();
+    this.request_plan(cmd);
 }
