@@ -327,18 +327,16 @@ AffordanceTemplateInterface.prototype.control_status_update = function()
             
             if (info[i].execution_valid) {
                 status.style.color = '0x0000ff';
-                status.text = 'SUCCESS';
+                status.innerHTML = 'SUCCESS';
             } else {
-                if (wp.second->plan_valid) {
+                if (info[i].plan_valid) {
                     status.style.color = '0x00ff00';
-                    status.text = "PLAN -> id[" + info[i].waypoint_plan_index + "]";
+                    status.innerHTML = "PLAN -> id[" + info[i].waypoint_plan_index + "]";
                 } else {
                     status.style.color = '0xff0000';
-                    status.text = "NO PLAN -> id[" + info[i].waypoint_plan_index + "]";
+                    status.innerHTML = "NO PLAN -> id[" + info[i].waypoint_plan_index + "]";
                 }
             }
-            
-
         }
     });
 }
