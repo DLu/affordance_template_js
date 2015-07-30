@@ -265,6 +265,7 @@ AffordanceTemplateInterface.prototype.update_trajectory = function()
             
         }
     }
+    this.control_status_update();
     
     
 }
@@ -294,6 +295,42 @@ AffordanceTemplateInterface.prototype.populate_affordances = function(id)
     }
     
     this.update_all();
+}
+
+AffordanceTemplateInterface.prototype.control_status_update = function()
+{
+    var that = this;
+    var template = this.get_template();
+    var traj = this.get_trajectory();
+    var request = new ROSLIB.ServiceRequest({name: template, trajectory_name: traj});
+    this.get_template_status_client.callService(request, function(result) {
+        var info = result.affordance_template_status[0].waypoint_info;
+        for(var i in info)
+        {
+            var name = info[i].end_effector_name;
+            var index = info[i].waypoint_index;
+            document.getElementById('ee_a_' + name).innerHTML = index;
+            
+            var status = document.getElementById('ee_s_' + name);
+            
+            if (info[i].execution_valid) {
+                status.style.color = '0x0000ff';
+                status.text = 'SUCCESS';
+            } else {
+                if (wp.second->plan_valid) {
+                    status.style.color = '0x00ff00';
+                    status.text = "PLAN -> id[" + info[i].waypoint_plan_index + "]";
+                } else {
+                    status.style.color = '0xff0000';
+                    status.text = "NO PLAN -> id[" + info[i].waypoint_plan_index + "]";
+                }
+            }
+            
+
+        }
+        console.log(info);
+    });
+    console.log("X");
 }
 
 AffordanceTemplateInterface.prototype.button = function(id)
