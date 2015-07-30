@@ -57,6 +57,18 @@ function AffordanceTemplateInterface(options) {
       serviceType : 'affordance_template_msgs/GetAffordanceTemplateStatus'
     });    
     
+    this.plan_command_client = new ROSLIB.Service({
+      ros : ros, 
+      name : '/affordance_template_server/plan_command',
+      serviceType : 'affordance_template_msgs/AffordanceTemplatePlanCommand'
+    });    
+    
+    this.execute_command_client = new ROSLIB.Service({
+      ros : ros, 
+      name : '/affordance_template_server/execute_command',
+      serviceType : 'affordance_template_msgs/AffordanceTemplateExecuteCommand'
+    });    
+    
     var request = new ROSLIB.ServiceRequest({name : robot});
     
     this.get_robots_client.callService(request, function(result) {
@@ -328,12 +340,10 @@ AffordanceTemplateInterface.prototype.control_status_update = function()
             
 
         }
-        console.log(info);
     });
-    console.log("X");
 }
 
 AffordanceTemplateInterface.prototype.button = function(id)
 {
-    alert("BUTTON" + id);
+    this.control_status_update();
 }
