@@ -43,8 +43,9 @@ function AffordanceTemplateInterface(options) {
     
     this.get_robots_client.callService(request, function(result) {
       that.robot_info = result.robots[0];
+      that.setup_ee_box();
     });
-   
+       
     this.get_templates_client.callService(request, function(result) {
       that.templates = result.templates;
       that.populate_affordances('affordance_list');
@@ -73,6 +74,24 @@ AffordanceTemplateInterface.prototype.on_check = function(name, value)
         //setup_ee_box(result.ids, result.end_effectors, result.num_points);
     });
   }
+}
+
+AffordanceTemplateInterface.prototype.setup_ee_box = function(ids, end_effectors, num_points)
+{
+    s = "<table><tr><th><th>name<th>cmd<th>@wp<th>#wps<th>Status";
+    for(var i in this.robot_info.end_effectors)
+    {
+        var ee = this.robot_info.end_effectors[i];
+        var n = parseInt(i) + 1;
+        s += "<tr><td>" + n;
+        s += "<td>" + ee.name;
+        s += "<td><input name=\"ee_opt_" + ee.name + "\" id=\"ee_opt_" + ee.name + "\" type=\"checkbox\" checked=\"checked\" />";
+        s += "<td id=\"ee_a_" + ee.name + "\">X</td>";
+        s += "<td id=\"ee_n_" + ee.name + "\">X</td>";
+        s += "<td id=\"ee_s_" + ee.name + "\">X</td>";
+    }
+    s += "</table>";
+    document.getElementById("ee_box").innerHTML = s;
 }
 
 AffordanceTemplateInterface.prototype.update_all = function()
