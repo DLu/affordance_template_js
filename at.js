@@ -2,7 +2,7 @@
  * @author David V. Lu!! - davidvlu@gmail.com
  */
 
-var buttons = {"start":"GO_TO_START", "left":"PLAY_BACKWARD", "rwnd":"STEP_BACKWARD", "right":"PLAY_FORWARD", "ffwd":"STEP_FORWARD", "pause":"PAUSE", "end": "GO_TO_END"};
+var buttons = {"start":"GO_TO_START",  "rwnd":"STEP_BACKWARD", "sync":"SYNC", "ffwd":"STEP_FORWARD", "end": "GO_TO_END"};
 
 /** 
  * @constructor
@@ -51,6 +51,12 @@ function AffordanceTemplateInterface(options) {
       serviceType : 'affordance_template_msgs/SetAffordanceTemplateTrajectory'
     });
     
+    this.get_template_status_client = new ROSLIB.Service({
+      ros : ros, 
+      name : '/affordance_template_server/get_template_status',
+      serviceType : 'affordance_template_msgs/GetAffordanceTemplateStatus'
+    });    
+    
     var request = new ROSLIB.ServiceRequest({name : robot});
     
     this.get_robots_client.callService(request, function(result) {
@@ -64,17 +70,37 @@ function AffordanceTemplateInterface(options) {
     });
 };
 
+function make_box(id, label, root)
+{
+    root.appendChild( document.createElement('br') );
+    var label = document.createElement('label');
+    label.setAttribute('for', id);
+    label.text = label;
+    root.appendChild( label );
+    
+    var select = document.createElement('select');
+    select.setAttribute('style', 'min-width: 150px')
+    select.setAttribute('id', id);
+    
+    root.appendChild( select );
+}
 AffordanceTemplateInterface.prototype.make_buttons = function() 
 {
+    var that = this;
     var path = "affordance_template_js/images/"
-    
-    var s = "";
+    var controls = document.getElementById("controls");
+    controls.innerHTML = '';
+        
     for(b in buttons){
-        s += "<img src=\"" + path + b + ".png\" width=\"50px\" onclick=\"button('" + buttons[b] + "')\" />\n";
+        var btn = document.createElement("img");
+        btn.setAttribute('name', buttons[b]);
+        btn.setAttribute('src', path +b + '.png');
+        btn.setAttribute('width', '50px');
+        btn.onclick = function() { that.button(this.name) };
+        controls.appendChild(btn);
     }
-    s += "<br/><label for=\"template_box\">Template: </label><select style=\"min-width: 150px\" id=\"template_box\"></select>";
-    s += "<br/><label for=\"trajectory_box\">Trajectory: </label><select style=\"min-width: 150px\" id=\"trajectory_box\"></select>";
-    document.getElementById("controls").innerHTML = s;
+    make_box('template_box', 'Template: ', controls);
+    make_box('trajectory_box', 'Trajectory: ', controls);
 }
 
 AffordanceTemplateInterface.prototype.on_check = function(name, value)
@@ -268,4 +294,9 @@ AffordanceTemplateInterface.prototype.populate_affordances = function(id)
     }
     
     this.update_all();
+}
+
+AffordanceTemplateInterface.prototype.button = function(id)
+{
+    alert("BUTTON" + id);
 }
