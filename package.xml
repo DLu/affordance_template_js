@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package>
+  <name>affordance_template_js</name>
+  <version>0.0.0</version>
+  <description>The affordance_template_js package</description>
+
+  <maintainer email="davidvlu@gmail.com">David V. Lu!!</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>  
+  <run_depend>interactive_marker_proxy</run_depend>
+  <run_depend>rosapi</run_depend>
+  <run_depend>rosbridge_server</run_depend>
+  <run_depend>tf2_web_republisher</run_depend>
+  <run_depend>topic_tools</run_depend>
+</package>
