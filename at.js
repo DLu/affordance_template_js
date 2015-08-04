@@ -407,7 +407,7 @@ AffordanceTemplateInterface.prototype.request_plan = function(cmd)
     
     this.plan_command_client.callService(request, function(result) {
         
-    }
+    });
 }
 
 AffordanceTemplateInterface.prototype.button = function(cmd)
