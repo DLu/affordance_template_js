@@ -112,6 +112,13 @@ AffordanceTemplateInterface.prototype.make_buttons = function()
         controls.appendChild(btn);
     }
     controls.appendChild( document.createElement("br") );
+
+    var st = document.createElement("button")
+    st.setAttribute("type", "button");
+    st.innerHTML = 'Status Update';
+    st.onclick = function() { that.control_status_update() };
+    controls.appendChild(st);
+
     var ex = document.createElement("button")
     ex.setAttribute("type", "button");
     ex.innerHTML = 'Execute Plan';
