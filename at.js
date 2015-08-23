@@ -321,29 +321,34 @@ AffordanceTemplateInterface.prototype.control_status_update = function()
     var traj = this.get_trajectory();
     var request = new ROSLIB.ServiceRequest({name: template, trajectory_name: traj});
     this.get_template_status_client.callService(request, function(result) {
-        var info = result.affordance_template_status[0].waypoint_info;
-        for(var i in info)
-        {
-            var name = info[i].end_effector_name;
-            var index = info[i].waypoint_index;
-            document.getElementById('ee_a_' + name).innerHTML = index;
-            
-            var status = document.getElementById('ee_s_' + name);
-            
-            if (info[i].execution_valid) {
-                status.style.color = '0x0000ff';
-                status.innerHTML = 'SUCCESS';
+        that.status_update(result.affordance_template_status[0]);
+    });
+}
+
+AffordanceTemplateInterface.prototype.status_update = function(status)
+{
+    var info = status.waypoint_info;
+    for(var i in info)
+    {
+        var name = info[i].end_effector_name;
+        var index = info[i].waypoint_index;
+        document.getElementById('ee_a_' + name).innerHTML = index;
+
+        var status = document.getElementById('ee_s_' + name);
+
+        if (info[i].execution_valid) {
+            status.style.color = '0x0000ff';
+            status.innerHTML = 'SUCCESS';
+        } else {
+            if (info[i].plan_valid) {
+                status.style.color = '0x00ff00';
+                status.innerHTML = "PLAN -> id[" + info[i].waypoint_plan_index + "]";
             } else {
-                if (info[i].plan_valid) {
-                    status.style.color = '0x00ff00';
-                    status.innerHTML = "PLAN -> id[" + info[i].waypoint_plan_index + "]";
-                } else {
-                    status.style.color = '0xff0000';
-                    status.innerHTML = "NO PLAN -> id[" + info[i].waypoint_plan_index + "]";
-                }
+                status.style.color = '0xff0000';
+                status.innerHTML = "NO PLAN -> id[" + info[i].waypoint_plan_index + "]";
             }
         }
-    });
+    }
 }
 
 AffordanceTemplateInterface.prototype.request_plan = function(cmd)
@@ -403,10 +408,9 @@ AffordanceTemplateInterface.prototype.request_plan = function(cmd)
         
     });
     
-    console.log(request);
-    
+    var that = this;
     this.plan_command_client.callService(request, function(result) {
-        
+        that.status_update(result.affordance_template_status);
     });
 }
 
