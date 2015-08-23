@@ -82,12 +82,12 @@ function AffordanceTemplateInterface(options) {
     });
 };
 
-function make_box(id, label, root)
+function make_box(id, label_txt, root)
 {
     root.appendChild( document.createElement('br') );
     var label = document.createElement('label');
     label.setAttribute('for', id);
-    label.text = label;
+    label.innerHTML = label_txt;
     root.appendChild( label );
     
     var select = document.createElement('select');
