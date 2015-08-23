@@ -192,6 +192,14 @@ AffordanceTemplateInterface.prototype.update_all = function()
     var that = this;
     this.get_running_client.callService(request, function(result) {
         that.update_select_box('template_box', result.templates, that.update_template);
+        var template = that.get_template_parts();
+        if(template){
+            var name = template[0];
+            var box = document.getElementById(name);
+            if(!box.checked){
+                box.checked = true;
+            }
+        }
     });
 }
 
@@ -315,6 +323,7 @@ AffordanceTemplateInterface.prototype.populate_affordances = function(id)
 
         checkbox.type = "checkbox";    // make the element a checkbox
         checkbox.name = name;          // give it a name we can check on the server side
+        checkbox.id = name;
         checkbox.value = name;         // make its value element
         checkbox.onclick=function() { that.on_check(this.name, this.checked); };
 
