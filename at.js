@@ -426,7 +426,30 @@ AffordanceTemplateInterface.prototype.request_plan = function(cmd)
 
 AffordanceTemplateInterface.prototype.execute = function()
 {
-    alert("EXECUTE");
+    var template = this.get_template_parts();
+    var trajectory = this.get_trajectory();
+    var tinfo = this.get_trajectory_object(template[0], trajectory) ;
+    var chosen_ees = [];
+    for(var i in this.robot_info.end_effectors)
+    {
+        var ee = this.robot_info.end_effectors[i];
+        var check = document.getElementById('ee_opt_' + ee.name);
+        if(!check.checked || check.disabled)
+            continue;
+        chosen_ees.push(ee.name);
+    }
+
+    var request = new ROSLIB.ServiceRequest({
+        type: template[0],
+        id: template[1],
+        trajectory_name: trajectory,
+        end_effectors: chosen_ees,
+    });
+
+    var that = this;
+    this.execute_command_client.callService(request, function(result) {
+        that.status_update(result.affordance_template_status);
+    });
 }
 
 AffordanceTemplateInterface.prototype.button = function(cmd)
