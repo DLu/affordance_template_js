@@ -111,6 +111,13 @@ AffordanceTemplateInterface.prototype.make_buttons = function()
         btn.onclick = function() { that.button(this.name) };
         controls.appendChild(btn);
     }
+    controls.appendChild( document.createElement("br") );
+    var ex = document.createElement("button")
+    ex.setAttribute("type", "button");
+    ex.innerHTML = 'Execute Plan';
+    ex.onclick = function() { that.execute() };
+    controls.appendChild(ex);
+
     make_box('template_box', 'Template: ', controls);
     make_box('trajectory_box', 'Trajectory: ', controls);
 }
@@ -411,7 +418,15 @@ AffordanceTemplateInterface.prototype.request_plan = function(cmd)
     var that = this;
     this.plan_command_client.callService(request, function(result) {
         that.status_update(result.affordance_template_status);
+        var check = document.getElementById('execute');
+        if(check.checked)
+            that.execute();
     });
+}
+
+AffordanceTemplateInterface.prototype.execute = function()
+{
+    alert("EXECUTE");
 }
 
 AffordanceTemplateInterface.prototype.button = function(cmd)
