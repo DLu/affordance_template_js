@@ -102,7 +102,29 @@ AffordanceTemplateInterface.prototype.make_buttons = function()
     var path = "affordance_template_js/images/"
     var controls = document.getElementById("controls");
     controls.innerHTML = '';
-        
+
+    var label = document.createElement('label');
+    label.setAttribute('for', 'steps');
+    label.innerHTML = 'Steps: ';
+    controls.appendChild(label);
+
+    var steps = document.createElement('input');
+    steps.id = 'steps';
+    steps.size = 2;
+    steps.value = 1;
+    controls.appendChild(steps);
+
+    label = document.createElement('label');
+    label.setAttribute('for', 'execute');
+    label.innerHTML = 'Execute on Plan';
+    controls.appendChild(label);
+
+    var exc = document.createElement('input');
+    exc.id = 'execute';
+    exc.type = 'checkbox';
+    controls.appendChild(exc);
+    controls.appendChild( document.createElement("br") );
+
     for(b in buttons){
         var btn = document.createElement("img");
         btn.setAttribute('name', buttons[b]);
