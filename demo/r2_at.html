@@ -74,13 +74,13 @@
     });
 
     // Setup the Point Cloud client.
-    /*var pointCloud2 = new ROS3D.PointCloud2({
+    var pointCloud2 = new ROS3D.PointCloud2({
       ros : ros,
       tfClient : tfClient,
       topic : '/r2/asus/depth/points_throttle',
       size : 0.01,
       rootObject : viewer.scene
-    });*/
+    });
     var at = new AffordanceTemplateInterface({ros: ros})
   }
 
